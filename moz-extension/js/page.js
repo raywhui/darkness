@@ -338,7 +338,27 @@ if (!DarknessLoader) { // Don't load twice
 		function DarknessLoader() {
 			currentlyEnabled = shouldEnableThemesNow();
 			log("Loading darkness in " + ENVIRONMENT + " mode. Currently enabled?", currentlyEnabled);
-	
+			
+
+
+
+				    //Check if browser is Chrome
+    	if (!!window.chrome && !!window.chrome.webstore) {
+        // insert conditional Chrome code here
+        console.log('##################Chrome');
+    	}
+    	//Check if browser is Firefox 
+    	else if (typeof InstallTrigger !== 'undefined') {
+        // insert conditional Firefox Code here
+        console.log('##################Firefox');
+    	}
+
+
+
+
+
+    	
+
 			onElementReady('head', function(method) {
 				log("HEAD is ready - via " + method);
 				if (SITE === 'youtube') {

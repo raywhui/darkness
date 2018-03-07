@@ -22,7 +22,6 @@
 		"http://*/",
 		"https://*/"
 	],
-
 	"content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'",
 	"web_accessible_resources": [
 		"themes-css/*.css",

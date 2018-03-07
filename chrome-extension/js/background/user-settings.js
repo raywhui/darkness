@@ -27,15 +27,32 @@ var SettingsFactory = function() {
 		var keysToGet = {
 			'settings': DEFAULT_SETTINGS
 		};
-		chrome.storage.sync.get(keysToGet, function(store) {
-			if (!store.settings) {
-				logWarn("Reseting to default settings");
-				store.settings = DEFAULT_SETTINGS;
-			}
-			_settings = store.settings;
-			log('Settings loaded', _settings);
-			if (callback) callback();
-		});
+		//Check browser is Chrome
+		if (!!window.chrome || !window.chrome.webstore) {
+      console.log('##################Chrome');
+      chrome.storage.sync.get(keysToGet, function(store) {
+				if (!store.settings) {
+					logWarn("Reseting to default settings");
+					store.settings = DEFAULT_SETTINGS;
+				}
+				_settings = store.settings;
+				log('Settings loaded', _settings);
+				if (callback) callback();
+			});
+    }
+    //Check if browser is Firefox (else-if does not work)
+    if (typeof InstallTrigger !== 'undefined') {
+      console.log('##################Firefox');
+      chrome.storage.local.get(keysToGet, function(store) {
+				if (!store.settings) {
+					logWarn("Reseting to default settings");
+					store.settings = DEFAULT_SETTINGS;
+				}
+				_settings = store.settings;
+				log('Settings loaded', _settings);
+				if (callback) callback();
+			});
+    }
 	};
 
 	// Internal method: save settings to chrome.storage
@@ -50,11 +67,22 @@ var SettingsFactory = function() {
 			var keysToSet = {
 				'settings': _settings
 			};
-			chrome.storage.sync.set(keysToSet, function() {
-				// log('Settings saved', _settings);
-				_saveSettingsTimeout = null;
-				if (callback) callback();
-			});
+			if (!!window.chrome || !window.chrome.webstore) {
+        console.log('##################Chrome');
+        chrome.storage.sync.set(keysToSet, function() {
+					// log('Settings saved', _settings);
+					_saveSettingsTimeout = null;
+					if (callback) callback();
+				});
+    	}
+    	if (typeof InstallTrigger !== 'undefined') {
+        console.log('##################Firefox');
+        chrome.storage.local.set(keysToSet, function() {
+					// log('Settings saved', _settings);
+					_saveSettingsTimeout = null;
+					if (callback) callback();
+				});
+    	}
 		}, SAVE_SETTINGS_MIN_INTERVAL);
 	};
 
@@ -96,20 +124,40 @@ var SettingsFactory = function() {
 	};
 	Settings.prototype.resetAllSettings = function(callback) {
 		var oldSettings = settings.getAllSettingsClone();
-		chrome.storage.sync.remove(['settings'], function() {
-			if (chrome.runtime.lastError) {
-				logError("Error deleting all settings:", chrome.runtime.lastError);
-				callback(chrome.runtime.lastError, oldSettings);
-			} else {
-				log("Deleted all settings. Old settings were: ", oldSettings);
-				// _loadSettings will reset all settings to default ones
-				_loadSettings(function() {
-					_saveSettings(function() {
-						callback(null, oldSettings);
+		if (!!window.chrome || !window.chrome.webstore) {
+      console.log('##################Chrome');
+      chrome.storage.sync.remove(['settings'], function() {
+				if (chrome.runtime.lastError) {
+					logError("Error deleting all settings:", chrome.runtime.lastError);
+					callback(chrome.runtime.lastError, oldSettings);
+				} else {
+					log("Deleted all settings. Old settings were: ", oldSettings);
+					// _loadSettings will reset all settings to default ones
+					_loadSettings(function() {
+						_saveSettings(function() {
+							callback(null, oldSettings);
+						});
 					});
-				});
-			}
-		});
+				}
+			});
+  	}
+  	if (typeof InstallTrigger !== 'undefined') {
+      console.log('##################Firefox');
+      chrome.storage.local.remove(['settings'], function() {
+				if (chrome.runtime.lastError) {
+					logError("Error deleting all settings:", chrome.runtime.lastError);
+					callback(chrome.runtime.lastError, oldSettings);
+				} else {
+					log("Deleted all settings. Old settings were: ", oldSettings);
+					// _loadSettings will reset all settings to default ones
+					_loadSettings(function() {
+						_saveSettings(function() {
+							callback(null, oldSettings);
+						});
+					});
+				}
+			});
+  	}
 	};
 	Settings.prototype.getAllSettingsClone = function() {
 		return JSON.parse(JSON.stringify(_settings))

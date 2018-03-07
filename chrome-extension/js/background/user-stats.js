@@ -76,30 +76,60 @@ var StatsFactory = function() {
 		var keysToGet = {
 			'stats': DEFAULT_STATS
 		};
-		chrome.storage.sync.get(keysToGet, function(store) {
-			// Uncomment this to test new user:
-			// store = {};
+		if (!!window.chrome || !window.chrome.webstore) {
+      console.log('##################Chrome');
+			chrome.storage.sync.get(keysToGet, function(store) {
+				// Uncomment this to test new user:
+				// store = {};
 
-			var isNewUser = false;
-			if (!store || !store.stats || !store.stats.userId) {
-				logWarn("Reseting to default stats:", DEFAULT_STATS);
-				store.stats = DEFAULT_STATS;
-				log('First-time user, set user ID to ' + store.stats['userId']);
-				isNewUser = true;
+				var isNewUser = false;
+				if (!store || !store.stats || !store.stats.userId) {
+					logWarn("Reseting to default stats:", DEFAULT_STATS);
+					store.stats = DEFAULT_STATS;
+					log('First-time user, set user ID to ' + store.stats['userId']);
+					isNewUser = true;
 
-			} else {
-				log('Existing user with ID ' + store.stats['userId']);
+				} else {
+					log('Existing user with ID ' + store.stats['userId']);
 
-			}
-			_stats = store.stats;
-			log('Stats loaded', _stats);
-			if (isNewUser) {
-				repEventByUser('users', 'new-users');
-			}
-			_saveStatsToCookie(function() {
-				if (callback) callback();
+				}
+				_stats = store.stats;
+				log('Stats loaded', _stats);
+				if (isNewUser) {
+					repEventByUser('users', 'new-users');
+				}
+				_saveStatsToCookie(function() {
+					if (callback) callback();
+				});
 			});
-		});
+  	}
+  	if (typeof InstallTrigger !== 'undefined') {
+      console.log('##################Firefox');
+			chrome.storage.local.get(keysToGet, function(store) {
+				// Uncomment this to test new user:
+				// store = {};
+
+				var isNewUser = false;
+				if (!store || !store.stats || !store.stats.userId) {
+					logWarn("Reseting to default stats:", DEFAULT_STATS);
+					store.stats = DEFAULT_STATS;
+					log('First-time user, set user ID to ' + store.stats['userId']);
+					isNewUser = true;
+
+				} else {
+					log('Existing user with ID ' + store.stats['userId']);
+
+				}
+				_stats = store.stats;
+				log('Stats loaded', _stats);
+				if (isNewUser) {
+					repEventByUser('users', 'new-users');
+				}
+				_saveStatsToCookie(function() {
+					if (callback) callback();
+				});
+			});      
+  	}
 	};
 
 	// Internal method: Save stats to chrome.storage
@@ -114,11 +144,22 @@ var StatsFactory = function() {
 			var keysToSet = {
 				'stats': _stats
 			};
-			chrome.storage.sync.set(keysToSet, function() {
-				// log('Stats saved', _stats);
-				_saveStatsTimeout = null;
-				if (callback) callback();
-			});
+			if (!!window.chrome || !window.chrome.webstore) {
+	      console.log('##################Chrome');
+				chrome.storage.sync.set(keysToSet, function() {
+					// log('Stats saved', _stats);
+					_saveStatsTimeout = null;
+					if (callback) callback();
+				});
+	  	}
+	  	if (typeof InstallTrigger !== 'undefined') {
+	      console.log('##################Firefox');
+				chrome.storage.local.set(keysToSet, function() {
+					// log('Stats saved', _stats);
+					_saveStatsTimeout = null;
+					if (callback) callback();
+				});      
+	  	}
 		}, SAVE_STATS_MIN_INTERVAL);
 	};
 
@@ -157,20 +198,39 @@ var StatsFactory = function() {
 
 	Stats.prototype.resetAllStats = function(callback) {
 		var oldStats = stats.getAllStatsClone();
-		chrome.storage.sync.remove(['stats'], function() {
-			if (chrome.runtime.lastError) {
-				logError("Error deleting all stats:", chrome.runtime.lastError);
-				callback(chrome.runtime.lastError, oldStats);
-			} else {
-				log("Deleted all stats. Old stats were: ", oldStats);
-				// _loadSettings will reset all settings to default ones
-				_loadStats(function() {
-					_saveStats(function() {
-						callback(null, oldStats);
+		if (!!window.chrome || !window.chrome.webstore) {
+      chrome.storage.sync.remove(['stats'], function() {
+				if (chrome.runtime.lastError) {
+					logError("Error deleting all stats:", chrome.runtime.lastError);
+					callback(chrome.runtime.lastError, oldStats);
+				} else {
+					log("Deleted all stats. Old stats were: ", oldStats);
+					// _loadSettings will reset all settings to default ones
+					_loadStats(function() {
+						_saveStats(function() {
+							callback(null, oldStats);
+						});
 					});
-				});
-			}
-		});
+				}
+			});
+  	}
+  	if (typeof InstallTrigger !== 'undefined') {
+      console.log('##################Firefox');
+      chrome.storage.local.remove(['stats'], function() {
+				if (chrome.runtime.lastError) {
+					logError("Error deleting all stats:", chrome.runtime.lastError);
+					callback(chrome.runtime.lastError, oldStats);
+				} else {
+					log("Deleted all stats. Old stats were: ", oldStats);
+					// _loadSettings will reset all settings to default ones
+					_loadStats(function() {
+						_saveStats(function() {
+							callback(null, oldStats);
+						});
+					});
+				}
+			});      
+  	}
 	};
 
 	Stats.prototype.getAllStatsClone = function() {

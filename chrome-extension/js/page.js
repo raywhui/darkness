@@ -338,7 +338,7 @@ if (!DarknessLoader) { // Don't load twice
 		function DarknessLoader() {
 			currentlyEnabled = shouldEnableThemesNow();
 			log("Loading darkness in " + ENVIRONMENT + " mode. Currently enabled?", currentlyEnabled);
-	
+
 			onElementReady('head', function(method) {
 				log("HEAD is ready - via " + method);
 				if (SITE === 'youtube') {
